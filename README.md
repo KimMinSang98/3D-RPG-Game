@@ -55,7 +55,8 @@ void MousePickCheck() {
         }
     }
 }
-### 👹 몬스터 AI
+
+### ✅ 몬스터 AI
 
 - 플레이어 감지, 추적, 공격 상태를 전환하며 동작하는 **FSM 기반 AI**
 - `idle → trace → attack` 상태 흐름에 따라 적절한 애니메이션과 이동 적용
@@ -107,7 +108,8 @@ void MonStateUpdate()
         }
     }
 }
-✅ 행동 처리 (MonActionUpdate)
+
+### ✅ 행동 처리 (MonActionUpdate)
 ```csharp
 void MonActionUpdate()
 {
