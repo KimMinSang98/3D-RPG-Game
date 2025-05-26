@@ -20,3 +20,38 @@ https://drive.google.com/file/d/1J7B_zu6HMrxjvlOZYeY1fT6kVRzrr28Q/view?usp=drive
 ## 🔧 주요 구현 기능
 
 ### ✅ 캐릭터 컨트롤
+- 마우스 클릭 기반 이동 구현
+- **우클릭**: 바닥 클릭 시 이동 / 몬스터 클릭 시 추적
+- **좌클릭**: 적 타겟 지정
+- 스킬 사용 중 이동 불가
+- UI 위 클릭 시 이동 방지 처리
+
+```csharp
+void MousePickCheck() {
+    if (Input.GetMouseButtonDown(1)) { // 우클릭 - 이동 또는 추적
+        if (!GameMgr.IsPointerOverUIObject() && !IsSkill()) {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            if (Physics.Raycast(ray, out hitInfo, Mathf.Infinity, LayerMask.value)) {
+                if (hitInfo.collider.gameObject.layer == LayerMask.NameToLayer("Enemy")) {
+                    MousePicking(hitInfo.point, hitInfo.collider.gameObject); // 몬스터 추적
+                    if (GameMgr.Inst.m_MsClickMark != null)
+                        GameMgr.Inst.m_MsClickMark.SetActive(false);
+                } else {
+                    MousePicking(hitInfo.point); // 이동
+                    GameMgr.Inst.MsClickMarkOn(hitInfo.point);
+                }
+            }
+        }
+    } else if (Input.GetMouseButtonDown(0)) { // 좌클릭 - 타겟 지정
+        if (!GameMgr.IsPointerOverUIObject()) {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            if (Physics.Raycast(ray, out hitInfo, Mathf.Infinity, LayerMask.value)) {
+                if (hitInfo.collider.gameObject.layer == LayerMask.NameToLayer("Enemy")) {
+                    MousePicking(hitInfo.point, hitInfo.collider.gameObject);
+                    if (GameMgr.Inst.m_MsClickMark != null)
+                        GameMgr.Inst.m_MsClickMark.SetActive(false);
+                }
+            }
+        }
+    }
+}
