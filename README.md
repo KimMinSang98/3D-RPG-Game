@@ -55,3 +55,90 @@ void MousePickCheck() {
         }
     }
 }
+### 👹 몬스터 AI
+
+- 플레이어 감지, 추적, 공격 상태를 전환하며 동작하는 **FSM 기반 AI**
+- `idle → trace → attack` 상태 흐름에 따라 적절한 애니메이션과 이동 적용
+- 공격 거리, 추적 거리 계산은 `Vector3.Distance` 대신 벡터 연산으로 직접 처리
+
+#### ✅ 상태 업데이트 (`MonStateUpdate`)
+
+```csharp
+void MonStateUpdate()
+{
+    if (m_AggroTarget == null) {
+        GameObject[] a_Players = GameObject.FindGameObjectsWithTag("Player");
+        foreach (GameObject player in a_Players) {
+            m_CacVLen = player.transform.position - transform.position;
+            m_CacVLen.y = 0.0f;
+            m_MoveDir = m_CacVLen.normalized;
+            m_CacDist = m_CacVLen.magnitude;
+
+            if (m_CacDist <= m_AttackDist) {
+                AI_State = AnimState.attack;
+                m_AggroTarget = player;
+                break;
+            } else if (m_CacDist <= m_TraceDist) {
+                AI_State = AnimState.trace;
+                m_AggroTarget = player;
+                break;
+            }
+        }
+
+        if (m_AggroTarget == null) {
+            AI_State = AnimState.idle;
+            m_AggroTgId = -1;
+        }
+    }
+    else {
+        m_CacVLen = m_AggroTarget.transform.position - transform.position;
+        m_CacVLen.y = 0.0f;
+        m_MoveDir = m_CacVLen.normalized;
+        m_CacDist = m_CacVLen.magnitude;
+
+        if (m_CacDist <= m_AttackDist)
+            AI_State = AnimState.attack;
+        else if (m_CacDist <= m_TraceDist)
+            AI_State = AnimState.trace;
+        else {
+            AI_State = AnimState.idle;
+            m_AggroTarget = null;
+            m_AggroTgId = -1;
+        }
+    }
+}
+✅ 행동 처리 (MonActionUpdate)
+```csharp
+void MonActionUpdate()
+{
+    if (m_AggroTarget == null) {
+        ChangeAnimState(AnimState.idle, 0.12f);
+        return;
+    }
+
+    if (AI_State == AnimState.attack) {
+        RotateToTarget();
+        ChangeAnimState(AnimState.attack, 0.12f);
+    }
+    else if (AI_State == AnimState.trace) {
+        RotateToTarget();
+
+        if (IsAttackAnim()) return;
+
+        m_MoveNextStep = m_MoveDir * (m_MoveVelocity * Time.deltaTime);
+        m_MoveNextStep.y = 0.0f;
+        transform.position += m_MoveNextStep;
+
+        ChangeAnimState(AnimState.trace, 0.12f);
+    }
+    else if (AI_State == AnimState.idle) {
+        ChangeAnimState(AnimState.idle, 0.12f);
+    }
+}
+
+void RotateToTarget() {
+    if (m_MoveDir.magnitude > 0.0001f) {
+        m_TargetRot = Quaternion.LookRotation(m_MoveDir);
+        transform.rotation = Quaternion.Slerp(transform.rotation, m_TargetRot, Time.deltaTime * m_RotSpeed);
+    }
+}
