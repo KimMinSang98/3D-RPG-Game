@@ -12,3 +12,11 @@ https://drive.google.com/file/d/1J7B_zu6HMrxjvlOZYeY1fT6kVRzrr28Q/view?usp=drive
 | 사용 엔진 | Unity 2022.3 LTS |
 | 개발 인원 | 1인 개발 |
 | 주요 역할 | 전체 시스템 기획 및 개발 , UI(Asset Store 제공된 UI 활용) 등 |
+## 🛠 사용 기술
+- Unity (3D 환경)
+- C# 스크립팅
+- Animator, NavMesh, Rigidbody, Raycast 등 활용
+- UI 시스템 (Canvas, Image, Text, Button)
+## 🔧 주요 구현 기능
+
+### ✅ 캐릭터 컨트롤
