@@ -156,4 +156,207 @@ void DoTrace() {
     ChangeAnimState(AnimState.trace, 0.12f); // 추적 애니메이션 실행
 }
 ```
-##
+## ✅ GlobalValue 클래스 (주요 기능과 설명 포함)
+- 로컬 저장 방식 사용
+- 아이디,닉네임, 물약 수 등 로컬 저장
+```
+using System.Collections.Generic;
+using UnityEngine;
+
+public static class GlobalValue
+{
+    // ▶ 여러 계정을 저장하는 Dictionary
+    // key: 계정 ID, value: (비밀번호, 닉네임, 골드, 다이아, 물약 수, 공격력, 최대체력, 스토리 본 여부)
+    public static Dictionary<string, (string password, string nickname, int gold, int diaCount, int healPotionCount, float attackPower, float maxHp, bool storyShown)> userAccounts 
+        = new Dictionary<string, (string, string, int, int, int, float, float, bool)>();
+
+    // ▶ 현재 로그인된 사용자 ID 저장
+    public static string currentUserId = "";
+
+    // ================================
+    // ▶ 게임 데이터 로드 (PlayerPrefs 기반)
+    // 저장된 모든 계정 데이터를 불러와 userAccounts 딕셔너리에 세팅
+    public static void LoadGameData()
+    {
+        int accountCount = PlayerPrefs.GetInt("AccountCount", 0);  // 저장된 계정 수 가져오기
+
+        for (int i = 0; i < accountCount; i++)
+        {
+            // 각 계정의 저장된 데이터를 PlayerPrefs에서 읽어오기
+            string id = PlayerPrefs.GetString("AccountId_" + i, "");
+            string password = PlayerPrefs.GetString("AccountPassword_" + i, "");
+            string nickname = PlayerPrefs.GetString("AccountNickName_" + i, "");
+            int gold = PlayerPrefs.GetInt("AccountGold_" + i, 0);
+            int diaCount = PlayerPrefs.GetInt("AccountDiaCount_" + i, 0);
+            int healPotionCount = PlayerPrefs.GetInt("AccountHealPotionCount_" + i, 0);
+            float attackPower = PlayerPrefs.GetFloat("AccountAttackPower_" + i, 20.0f);
+            float maxHp = PlayerPrefs.GetFloat("AccountMaxHp_" + i, 200.0f);
+            bool storyShown = PlayerPrefs.GetInt("AccountStoryShown_" + i, 0) == 1;
+
+            // 유효한 ID일 때만 딕셔너리에 추가
+            if (!string.IsNullOrEmpty(id))
+            {
+                userAccounts[id] = (password, nickname, gold, diaCount, healPotionCount, attackPower, maxHp, storyShown);
+            }
+        }
+    }
+
+    // ================================
+    // ▶ 게임 데이터 저장 (PlayerPrefs 기반)
+    // userAccounts 딕셔너리에 저장된 모든 계정 데이터를 PlayerPrefs에 저장
+    public static void SaveGameData()
+    {
+        int accountIndex = 0;
+
+        foreach (var account in userAccounts)
+        {
+            PlayerPrefs.SetString("AccountId_" + accountIndex, account.Key);
+            PlayerPrefs.SetString("AccountPassword_" + accountIndex, account.Value.password);
+            PlayerPrefs.SetString("AccountNickName_" + accountIndex, account.Value.nickname);
+            PlayerPrefs.SetInt("AccountGold_" + accountIndex, account.Value.gold);
+            PlayerPrefs.SetInt("AccountDiaCount_" + accountIndex, account.Value.diaCount);
+            PlayerPrefs.SetInt("AccountHealPotionCount_" + accountIndex, account.Value.healPotionCount);
+            PlayerPrefs.SetFloat("AccountAttackPower_" + accountIndex, account.Value.attackPower);
+            PlayerPrefs.SetFloat("AccountMaxHp_" + accountIndex, account.Value.maxHp);
+            PlayerPrefs.SetInt("AccountStoryShown_" + accountIndex, account.Value.storyShown ? 1 : 0);
+
+            accountIndex++;
+        }
+
+        PlayerPrefs.SetInt("AccountCount", accountIndex); // 저장된 계정 수도 저장
+        PlayerPrefs.Save(); // 저장 반영
+    }
+
+    // ================================
+    // ▶ 로그인 처리
+    // 입력한 id와 password가 일치하면 로그인 성공, currentUserId 세팅
+    public static bool Login(string id, string password)
+    {
+        if (userAccounts.ContainsKey(id) && userAccounts[id].password == password)
+        {
+            currentUserId = id;
+            return true;
+        }
+        return false;
+    }
+
+    // ================================
+    // ▶ 계정 생성
+    // 중복된 아이디가 없으면 새 계정을 만들고 초기값 세팅
+    public static bool CreateAccount(string id, string password, string nickname)
+    {
+        if (userAccounts.ContainsKey(id))
+            return false;  // 이미 존재하는 ID
+
+        // 초기값: 골드, 다이아, 물약 수량 0, 공격력 10, 최대체력 200, 스토리 본 여부 false
+        userAccounts[id] = (password, nickname, 0, 0, 0, 10.0f, 200.0f, false);
+
+        SaveGameData();  // 저장
+        return true;
+    }
+
+    // ================================
+    // ▶ 골드 업데이트 (로그인한 계정 기준)
+    public static void UpdateGold(int amount)
+    {
+        if (string.IsNullOrEmpty(currentUserId)) return;
+
+        var account = userAccounts[currentUserId];
+        account.gold += amount;
+        if (account.gold < 0) account.gold = 0;
+
+        userAccounts[currentUserId] = account;
+        SaveGameData();
+    }
+
+    // ================================
+    // ▶ 다이아 업데이트 (로그인한 계정 기준)
+    public static void UpdateDiaCount(int amount)
+    {
+        if (string.IsNullOrEmpty(currentUserId)) return;
+
+        var account = userAccounts[currentUserId];
+        account.diaCount += amount;
+        if (account.diaCount < 0) account.diaCount = 0;
+
+        userAccounts[currentUserId] = account;
+        SaveGameData();
+    }
+
+    // ================================
+    // ▶ 물약 수량 업데이트 (로그인한 계정 기준)
+    public static void UpdateHealPotionCount(int amount)
+    {
+        if (string.IsNullOrEmpty(currentUserId)) return;
+
+        var account = userAccounts[currentUserId];
+        account.healPotionCount += amount;
+        if (account.healPotionCount < 0) account.healPotionCount = 0;
+
+        userAccounts[currentUserId] = account;
+        SaveGameData();
+    }
+
+    // ================================
+    // ▶ 게임 데이터 초기화 (모든 저장 데이터 삭제)
+    public static void ResetGameData()
+    {
+        PlayerPrefs.DeleteAll();
+        currentUserId = "";
+        userAccounts.Clear();
+    }
+}
+```
+# ✅캐릭터 데미지 처리 (TakeDamage 함수)
+- 캐릭터가 데미지를 받을 때 호출되는 함수
+- 체력이 0 이하일 경우 데미지를 무시함 (이미 죽은 상태)
+- 공격자가 보스 몬스터면 데미지를 30으로 고정
+- 체력을 차감하고 UI(체력바, 체력 텍스트)를 갱신
+- 데미지 숫자 텍스트를 캐릭터 머리 위에 띄움
+- 체력이 0 이하가 되면 사망 처리 실행
+
+### 📌 핵심 코드
+
+```csharp
+public void TakeDamage(GameObject a_Attacker, float a_Damage = 10.0f)
+{
+    if (CurHp <= 0.0f)
+        return;
+
+    if (a_Attacker != null && a_Attacker.GetComponent<Monster_Ctrl>() != null)
+    {
+        Monster_Ctrl monsterCtrl = a_Attacker.GetComponent<Monster_Ctrl>();
+        if (monsterCtrl.monType == MonType.Boss)
+        {
+            a_Damage = 30.0f;
+        }
+    }
+
+    CurHp -= a_Damage;
+    if (CurHp < 0.0f)
+        CurHp = 0.0f;
+
+    ImgHpbar.fillAmount = CurHp / MaxHp;
+    Hpbar2.fillAmount = CurHp / MaxHp;
+
+    UpdateHpText();
+
+    SetAttackColor();
+
+    Vector3 a_CacPos = this.transform.position;
+    a_CacPos.y += 2.65f;
+    GameMgr.Inst.SpawnDamageText((int)a_Damage, a_CacPos, 1);
+
+    if (CurHp <= 0.0f)
+    {
+        Die();
+    }
+}
+```
+## 프로젝트 경험으로 느낀 점
+- 프로젝트를 통해 게임 캐릭터 및 몬스터 AI 구현에 대해 경험
+- 스킬 마다 쿨타임 적용 등 UI와 상호 작용 처리 등 완성도를 높이려 노력
+## 아쉬운 점
+- 스킬 이펙트가 단조롭고 스킬과 일반공격이 자연스럽지 못함
+- 퀘스트 등 게임을 지속 플레이 하는 것이 부족
+- 코드 중복 및 기능 분리 스크립팅 부족
