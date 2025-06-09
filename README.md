@@ -2,7 +2,7 @@
 - Unity 기반의 3D 포트폴리오 프로젝트입니다.
 - 플레이어 이동, 전투 시스템, 몬스터 AI, UI 등 기능을 구현하였습니다.
 - [포트폴리오 다운로드 링크] https://drive.google.com/file/d/1Z_1VpIZxQoJhnxkAVnV7jrzf78L5xlYw/view?usp=drive_link
-- 플레이 유튜브 업로드 예정
+- [플레이 유튜브 링크] https://youtu.be/yGug4HMx4Ys
 # 프로젝트 개요
 | 항목 | 내용 |
 |------|------|
